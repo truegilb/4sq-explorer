@@ -1,0 +1,15 @@
+application: rating-engine
+version: 1
+# need default module otherwise appengine doesn't deploy
+module: default 
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: .*
+  script: myweb.app
+
+libraries:
+- name: webapp2
+  version: "2.5.2"

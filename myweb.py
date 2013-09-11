@@ -6,8 +6,14 @@ import webapp2
 ### top level class
 #
 class HelloWebapp2(webapp2.RequestHandler):
+    readme = ''
     def get(self):
-        self.response.write('Hello, this is a prototype for Rating backend for iPass Hackathon.')
+        try:
+            readme = open( 'readme.html', 'r').read()
+        except:
+            # assign static text if readme file is not there
+            readme = 'Hello, this is a prototype for Rating Backend'
+        self.response.write( readme )
 
 # network id (bssid is used here), then a tuple containing average rating and 
 # number of rating submissions
@@ -64,7 +70,7 @@ class ShowRatings( webapp2.RequestHandler ):
     def get(self):
         ratings = x.getAllRatings()
         for k in ratings.keys():
-            self.response.write( '<p> id=' + k + ' => rating=' + str(ratings[ k ]) + '</p>' )
+            self.response.write( '<p> networkID=' + k + ' => rating=' + str(ratings[ k ]) + '</p>' )
 
 # display rating and # of submissions
 #
@@ -115,9 +121,8 @@ app = webapp2.WSGIApplication([
     ('/getall', GetAllRatings),
 ], debug=True)
 
-#myhost = '127.0.0.1'
-myhost=''
-#myhost = '192.168.42.15'
+
+myhost = ''
 def main():
     from paste import httpserver
     httpserver.serve(app, myhost, port='8080')

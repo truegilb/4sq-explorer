@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import webapp2
 import requests
 import json
-# import StringIO
 
 class HelloWebapp2(webapp2.RequestHandler):
     readme = ''
@@ -24,6 +25,7 @@ vcategories_url = "https://api.foursquare.com/v2/venues/categories?v=1&" + _4SQ_
 class GetVenue(webapp2.RequestHandler):
     def get(self):
         r = requests.get( sample_url )
+        j = json.loads( r.content )        
         self.response.write( r.content)
 
 class VenueCategories(webapp2.RequestHandler):
@@ -31,11 +33,19 @@ class VenueCategories(webapp2.RequestHandler):
         r = requests.get( vcategories_url )
         print vcategories_url
         j = json.loads( r.content )
-#        jstr = json.dump( j, indent=2, separators=(',', ': '))
         jstr = j['response']
         jjstr = json.dumps( jstr, indent=2, separators=(',', ': '))
         self.response.write( jjstr )
-        print jjstr
+
+        # list the 
+        numCategories = len(j['response']['categories'])
+        print numCategories
+        for v in j['response']['categories']:
+            print "> " + v['name']
+            for vv in v['categories']:
+                if ( vv ):
+                    # need utf8 encode because of words like Cafes
+                    print " >> " + vv['name'].encode('utf-8')
 
 app = webapp2.WSGIApplication([
     ('/', HelloWebapp2),

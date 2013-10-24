@@ -1,0 +1,15 @@
+application: dev4sq 
+version: 2
+# need default module otherwise appengine doesn't deploy
+module: default 
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+handlers:
+- url: .*
+  script: appengine_venue.app
+
+libraries:
+- name: webapp2
+  version: "2.5.2"

@@ -5,14 +5,8 @@ from google.appengine.ext import webapp
 from google.appengine.api import urlfetch
 import json
 import re
-
-### Util functions
-###
-def newline( string ):
-    return( '<p>' + string + '</p>' )
-
-def srcimg( url ):
-    return( '<img src="' + url + '"/>' )
+import util as u # utility library
+import logging
 
 def obfuscate_url( url ):
     p = re.compile( r'client_.*?\=.*?\&' )
@@ -38,6 +32,7 @@ _4SQ_SECRET = 'client_secret=C3NRU0VFSG2GYXXJXZTZC0NM5A0TTY2FOBFIMEYJBXD44P1S'
 _4SQ_ID="client_id=5BN0AMHK3WLKIOOTWSUIFFWGWWUN3QERYT5LOT5JNZLQZC4H"
 _4SQ_VER="v=20131011" # random version number for now, req'd by 4sq API
 _4SQ_LIMIT="limit=6"
+D_4SQ_ID=""
 
 #venuesearch_prefix = "https://api.foursquare.com/v2/venues/search?ll=37.4828,-122.2361"
 venuesearch_prefix = "https://api.foursquare.com/v2/venues/search?"
@@ -70,7 +65,7 @@ class GetVenue(webapp.RequestHandler):
         except:
             print "get err"
 
-        self.response.write(  newline( 'query =' + querystr ))
+        self.response.write(  u.newline( 'query =' + querystr ))
         # search for venue first
         #
         venue_search_url = (venuesearch_prefix + _4SQ_ID + '&' + 
@@ -82,24 +77,24 @@ class GetVenue(webapp.RequestHandler):
         j = json.loads( r.content )        
 
         if (j['meta']['code'] != 200):
-            self.response.write( newline("API error"))
-            self.response.write( newline( r.content ))
+            self.response.write( u.newline("API error"))
+            self.response.write( u.newline( r.content ))
             return
 
         numVenues = len(j['response']['venues'] )
         if ( numVenues == 0): # search returns nothing
-            self.response.write( newline( "No venue found with that query"))
+            self.response.write( u.newline( "No venue found with that query"))
             return
         else:
-            self.response.write( newline( str(numVenues) + 
+            self.response.write( u.newline( str(numVenues) + 
                                           ' venue found. Showing the first one.'))
 
         first_result = j['response']['venues'][0]
         venue_id = j['response']['venues'][0]['id']
-        self.response.write( newline( obfuscate_url(venue_search_url ) ))
-        self.response.write( newline( 'venue id = ' + venue_id) )
-        self.response.write( newline( 'venue name = ' + first_result['name'] ) )
-        self.response.write( newline( str(first_result['location']) ) )
+        self.response.write( u.newline( obfuscate_url(venue_search_url ) ))
+        self.response.write( u.newline( 'venue id = ' + venue_id) )
+        self.response.write( u.newline( 'venue name = ' + first_result['name'] ) )
+        self.response.write( u.newline( str(first_result['location']) ) )
 
         # get some photos
         rr = urlfetch.fetch( vphotos_url_prefix + venue_id + '/photos?' + _4SQ_VER + '&' + 
@@ -116,12 +111,12 @@ class GetVenue(webapp.RequestHandler):
         #
         jjphotos = jj['response']['photos']['items']
         if ( len(jjphotos) < 1):
-            self.response.write( newline( 'No photos found at this venue.' ))
+            self.response.write( u.newline( 'No photos found at this venue.' ))
         for p in jjphotos:
             p_url = p['prefix'] + 'original' + p['suffix']
             # self.response.write( newline(p['visibility']) )
-            self.response.write( newline(str(p['source']) ))
-            self.response.write( srcimg( p_url ))
+            self.response.write( u.newline(str(p['source']) ))
+            self.response.write( u.srcimg( p_url ))
 
 class VenueCategories(webapp2.RequestHandler):
     def get(self):
@@ -143,10 +138,25 @@ class VenueCategories(webapp2.RequestHandler):
                     # need utf8 encode because of words like Cafes
                     print " >> " + vv['name'].encode('utf-8')
 
+class Get4Sq(webapp2.RequestHandler):
+    def get(self):
+        j = u.loadfile( 'secret.json' )
+        self.response.write( u.newline(str(j)))
+        self.response.write( u.newline( 'id=' + D_4SQ_ID ))
+
+def init_secret():
+    j = u.loadfile( 'secret.json')
+    D_4SQ_SECRET = "client_secret=" + j['4sq_secret']
+    D_4SQ_ID= "client_id=" + j['4sq_id']
+    logging.info( D_4SQ_SECRET )
+    logging.info( D_4SQ_ID )
+
+init_secret()
 app = webapp2.WSGIApplication([
     ('/', RootWebapp2),
     ('/venue', GetVenue),
     ('/venuecat', VenueCategories),
+    ('/secret', Get4Sq),
 ], debug=True)
 
 myhost = ''
